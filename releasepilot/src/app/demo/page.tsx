@@ -137,6 +137,44 @@ const DEMO_STEPS: DemoStep[] = [
   },
   {
     id: 7,
+    title: 'Nexus Command Center',
+    subtitle: 'Living digital twin — architecture, impact, confidence',
+    duration: '~60s',
+    route: '/nexus',
+    cta: 'Open Nexus →',
+    icon: '⬡',
+    description:
+      'The Nexus is a living engineering map of the repository. It shows the architecture knowledge graph, the Impact Radar (trace what each fix affected), the Release Confidence Engine (explainable weighted score), and the Engineering Flight Recorder (full audit trail of every decision).',
+    evidence: [
+      'Architecture graph: 7 components · 7 connections · all HEALTHY after fix',
+      'Impact Radar: selecting the password-reset fix highlights Auth, DB, and Tests nodes',
+      'Confidence Engine: 29/100 (before) → 94/100 (after) with signal breakdown',
+      'Flight Recorder: 13 entries — every ANALYZED, PROPOSED, REQUIRES_APPROVAL, APPROVED step',
+      'All evidence labeled with source: EXECUTED, ANALYZED, SIMULATED',
+    ],
+    keyTakeaway: 'The Nexus makes the agent\'s thinking visible — architecture, impact, evidence, and confidence in one view.',
+  },
+  {
+    id: 8,
+    title: 'Proof Mode — Real Local Execution',
+    subtitle: 'Safe sandbox with real test output',
+    duration: '~45s',
+    route: '/nexus',
+    cta: 'Run Proof Mode →',
+    icon: '🔬',
+    description:
+      'Proof Mode runs genuine commands against the bundled fixture repository inside a strict sandbox — no network, no secrets, no external writes. Click "Execute" on run-tests to see 2 real test failures (the intentional pre-fix bugs). Click analyze-deps to detect the real CVE in the fixture\'s package.json.',
+    evidence: [
+      'node tests/run.js — runs 10 fixture tests, exits 1 (2 failures expected)',
+      'Bug #1: Token reuse attack — used token not rejected (real assertion failure)',
+      'Bug #2: Float precision — 89.991 !== 89.99 (real arithmetic failure)',
+      'analyze-deps — detects jsonwebtoken@8.5.1 (CVE-2022-23529 CVSS 7.6)',
+      'Label: EXECUTED IN SAFE LOCAL SANDBOX — not simulated, actually executed',
+    ],
+    keyTakeaway: 'Real evidence from real execution — not a mock, not a slide. Actual test failures proving the bugs exist.',
+  },
+  {
+    id: 9,
     title: 'Deployment Preparation',
     subtitle: 'Release gate, smoke tests, health checks',
     duration: '~45s',
@@ -262,7 +300,7 @@ export default function DemoPage() {
                 From Broken Repository to Verified Release
               </h1>
               <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-                7-step guided demo · ~{totalEstMin} minutes · E-Commerce Platform (seeded with 6 engineering issues)
+                9-step guided demo · ~{totalEstMin} minutes · E-Commerce Platform · Nexus · Proof Mode
               </p>
             </div>
 
@@ -406,11 +444,14 @@ export default function DemoPage() {
                   <span className="text-red-400 font-semibold">67/100 health · 6 open issues · 3 failing tests</span>{' '}
                   to{' '}
                   <span className="text-emerald-400 font-semibold">94/100 health · 0 open issues · 145/145 tests passing</span>{' '}
-                  — with a full audit trail, human approval gate, and deployment checklist.
+                  — with a living architecture map, real executed evidence, human approval gate, and deployment checklist.
                 </p>
-                <div className="mt-4 flex gap-3 justify-center">
+                <div className="mt-4 flex gap-3 justify-center flex-wrap">
+                  <Link href="/nexus" className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold transition-colors">
+                    Nexus Command Center →
+                  </Link>
                   <Link href="/demo/compare" className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors">
-                    Before/After Comparison →
+                    Before/After →
                   </Link>
                   <button
                     onClick={resetDemo}
@@ -425,7 +466,7 @@ export default function DemoPage() {
             {/* Quick navigation to other key pages */}
             <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3">
               {[
-                { href: '/repositories/repo_ecommerce', label: 'Repository', icon: '📁' },
+                { href: '/nexus', label: 'Nexus', icon: '⬡' },
                 { href: '/runs/new?repo=repo_ecommerce', label: 'Start Run', icon: '⚡' },
                 { href: '/runs/run_01', label: 'Full Report', icon: '📋' },
                 { href: '/demo/compare', label: 'Before/After', icon: '📊' },

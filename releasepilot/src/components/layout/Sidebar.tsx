@@ -59,11 +59,37 @@ function IconBolt() {
   );
 }
 
+function IconDemo() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="5 3 19 12 5 21 5 3" />
+    </svg>
+  );
+}
+
+function IconNexus() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <circle cx="12" cy="3" r="1.5"/>
+      <circle cx="21" cy="12" r="1.5"/>
+      <circle cx="12" cy="21" r="1.5"/>
+      <circle cx="3" cy="12" r="1.5"/>
+      <line x1="12" y1="4.5" x2="12" y2="9"/>
+      <line x1="19.5" y1="12" x2="15" y2="12"/>
+      <line x1="12" y1="19.5" x2="12" y2="15"/>
+      <line x1="4.5" y1="12" x2="9" y2="12"/>
+    </svg>
+  );
+}
+
 const NAV_ITEMS: NavItem[] = [
   { href: '/',               label: 'Dashboard',    icon: <IconDashboard /> },
+  { href: '/nexus',          label: 'Nexus',        icon: <IconNexus /> },
   { href: '/repositories',   label: 'Repositories', icon: <IconRepositories />, badge: 4 },
   { href: '/runs',           label: 'Agent Runs',   icon: <IconRuns />, badge: 1 },
   { href: '/onboard',        label: 'Connect Repo', icon: <IconBolt /> },
+  { href: '/demo',           label: 'Judge Demo',   icon: <IconDemo /> },
   { href: '/settings',       label: 'Settings',     icon: <IconSettings /> },
 ];
 
@@ -157,7 +183,7 @@ export default function Sidebar() {
 
       {/* Version footer */}
       <div className="px-5 py-3 border-t border-border-default">
-        <p className="text-2xs text-text-muted">ReleasePilot <span className="font-mono">v0.4.0</span> · Phases 1–4 ✓</p>
+        <p className="text-2xs text-text-muted">ReleasePilot <span className="font-mono">v0.5.0</span> · Phases 1–5 ✓</p>
       </div>
     </aside>
   );

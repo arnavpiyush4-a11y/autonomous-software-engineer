@@ -39,22 +39,20 @@ npm start       # Start production server
 
 ReleasePilot AI ships with a fully seeded demo repository: **E-Commerce Platform** with six pre-loaded issues.
 
+> **Recommended starting point:** Open [`/demo`](http://localhost:3000/demo) for the guided step-by-step judge walkthrough.
+> For the click-by-click script, see [`DEMO_SCRIPT.md`](./DEMO_SCRIPT.md).
+
 ### 1. Dashboard → `http://localhost:3000`
 - View global metrics: repositories, active runs, issues found/fixed this week
 - See the E-Commerce Platform with health score, active run, and recent activity
 - All panels refresh dynamically as runs complete
 
-### 2. Repository Onboarding → `/onboard`
-- Click **"Connect Repository"** or **"Use Demo Repository"**
-- Watch the live analysis terminal scan: languages, frameworks, dependencies, CI/CD, Docker, AGENTS.md
-- Architecture map auto-generates from the scan
-
-### 3. Repository Detail → `/repositories/repo_ecommerce`
+### 2. Repository Detail → `/repositories/repo_ecommerce`
 - SVG architecture map showing: Next.js Frontend → API Layer → PostgreSQL + Redis
 - Health findings grid: 6 issues (CRITICAL: CVE, HIGH: bug, MEDIUM: tests, etc.)
 - Onboarding summary with setup commands
 
-### 4. Start Agent Run → `/runs/new?repo=repo_ecommerce`
+### 3. Start Agent Run → `/runs/new?repo=repo_ecommerce`
 - Task pre-filled: *"Prepare this project for release and resolve all issues necessary to make it production-ready"*
 - **Phase: Configure** → enter or confirm task
 - **Phase: Scope** → review affected files, risk assessment, required tests (shown before any modifications)
@@ -63,11 +61,20 @@ ReleasePilot AI ships with a fully seeded demo repository: **E-Commerce Platform
 - **Approval Modal** → triggered at dependency audit stage — review files, impact, rollback plan → Approve / Request Changes / Reject (no auto-approve)
 - Run continues through fix generation → test writing → validation → report
 
+### 4. Before/After Comparison → `/demo/compare`
+- Health score: **67 → 94** (+27 points) with visual arc gauges
+- Release risk: **HIGH → LOW** (94/100)
+- Open issues: **6 → 0** (all resolved)
+- Test suite comparison: 142/145 failing → 145/145 passing
+- Coverage: **71.4% → 85.6%** (+14.2%)
+- Code changes: 6 files with PROPOSED labels — clearly not executed in production
+- Simulation disclaimer: every value labeled with its execution status
+
 ### 5. Run Detail → `/runs/run_01`
 - Workflow timeline (10 stages, all DONE)
 - Code changes panel with before/after diffs (6 files)
 - Review findings with severity filter tabs
-- Test results: 114→142 tests, 71%→87% coverage
+- Test results: 142→145 tests passing, 71.4%→85.6% coverage
 - Release risk score: **94/100 LOW risk**
 - Approval record showing explicit human decision
 - **→ "Deploy Preparation" button**
@@ -93,6 +100,9 @@ releasepilot/
 │   │   ├── error.tsx                 # Global error boundary
 │   │   ├── not-found.tsx             # 404 page
 │   │   ├── onboard/page.tsx          # Repository onboarding wizard
+│   │   ├── demo/
+│   │   │   ├── page.tsx              # Guided judge demo (7-step walkthrough)
+│   │   │   └── compare/page.tsx      # Before/after metrics comparison
 │   │   ├── repositories/
 │   │   │   ├── page.tsx              # Repository list
 │   │   │   └── [id]/page.tsx         # Repository detail + architecture map
@@ -106,6 +116,7 @@ releasepilot/
 │   │   ├── settings/page.tsx         # Settings page
 │   │   └── api/
 │   │       ├── analysis/scan/        # POST — repository analysis
+│   │       ├── demo/reset/           # POST/GET — safe demo state reset
 │   │       └── runs/[id]/
 │   │           ├── approve/          # GET/POST — approval workflow
 │   │           └── deploy/           # GET/POST — deployment actions
@@ -270,6 +281,7 @@ Tests use Node.js built-in `assert` with a lightweight inline runner. No Jest/Vi
 | 3 | ✅ Complete | State machine, analysis engine, run wizard, approval gates, 27 unit tests |
 | 4 | ✅ Complete | Deployment preparation, gate checks, smoke tests, health checks, changelog |
 | 5 | ✅ Complete | Loading/error/404 states, responsive polish, README |
+| Demo | ✅ Complete | `/demo` guided walkthrough, `/demo/compare` before/after page, `DEMO_SCRIPT.md` |
 
 ---
 

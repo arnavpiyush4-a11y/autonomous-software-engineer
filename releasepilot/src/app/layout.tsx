@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
 import DemoModeBanner from '@/components/ui/DemoModeBanner';
+import CommandPalette from '@/components/ui/CommandPalette';
 
 export const metadata: Metadata = {
   title: 'ReleasePilot AI — Autonomous Engineering Agent',
@@ -25,6 +26,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </main>
           </div>
         </div>
+        {/* Global command palette — ⌘K / Ctrl+K */}
+        <CommandPalette />
       </body>
     </html>
   );

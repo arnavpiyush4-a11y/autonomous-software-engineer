@@ -1,8 +1,7 @@
-'use client';
-
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import { PHASE4_DEPLOYMENT_REPORT } from '@/lib/phase4-data';
+import ChangelogPanel from './ChangelogPanel';
 import type {
   ReleaseGateCheck,
   DeploymentStep,
@@ -407,9 +406,9 @@ function ChangelogPanel({ changelog, releaseNotes, version }: {
 
 // ─── Main Page ───────────────────────────────────────────────────────────────
 
-export default function DeployPage({ params }: { params: { id: string } }) {
+export default async function DeployPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: runId } = await params;
   const report = PHASE4_DEPLOYMENT_REPORT;
-  const runId = params.id;
   const isDemo = runId === 'run_01';
 
   const passedGates = report.gateChecks.filter(c => c.status === 'PASS').length;

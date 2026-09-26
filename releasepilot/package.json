@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node -e \"require('ts-node').register({project:'tsconfig.test.json',transpileOnly:true}); require('tsconfig-paths/register'); require('./tests/unit.test.ts'); require('./tests/phase6.test.ts')\"",
+    "test": "node -e \"require('ts-node').register({project:'tsconfig.test.json',transpileOnly:true}); require('tsconfig-paths/register'); require('./tests/unit.test.ts'); require('./tests/phase6.test.ts'); require('./tests/bugfix.test.ts')\"",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "ts-node prisma/seed.ts"

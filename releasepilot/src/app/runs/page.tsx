@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/layout/TopBar';
 import { MOCK_RUNS, MOCK_REPOSITORIES } from '@/lib/mock-data';
@@ -120,32 +123,45 @@ function RunCard({ run }: { run: AgentRun }) {
   );
 }
 
+type RunFilter = 'All Runs' | 'Completed' | 'Running' | 'Failed';
+
 export default function RunsPage() {
-  const runs = [...MOCK_RUNS].sort(
+  const [activeFilter, setActiveFilter] = useState<RunFilter>('All Runs');
+
+  const allRuns = [...MOCK_RUNS].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  const completed = runs.filter((r) => r.status === 'COMPLETED').length;
-  const running = runs.filter((r) => r.status === 'RUNNING').length;
-  const failed = runs.filter((r) => r.status === 'FAILED').length;
+  const completed = allRuns.filter((r) => r.status === 'COMPLETED').length;
+  const running = allRuns.filter((r) => r.status === 'RUNNING').length;
+  const failed = allRuns.filter((r) => r.status === 'FAILED').length;
+
+  const runs = allRuns.filter((r) => {
+    if (activeFilter === 'All Runs') return true;
+    if (activeFilter === 'Completed') return r.status === 'COMPLETED';
+    if (activeFilter === 'Running') return r.status === 'RUNNING';
+    if (activeFilter === 'Failed') return r.status === 'FAILED';
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-bg-base">
-      <TopBar title="Agent Runs" subtitle={`${runs.length} total runs · ${running} active`} />
+      <TopBar title="Agent Runs" subtitle={`${allRuns.length} total runs · ${running} active`} />
 
       <div className="max-w-screen-2xl mx-auto px-6 py-6">
         {/* Summary chips */}
         <div className="flex items-center gap-3 mb-6 flex-wrap">
-          {[
-            { label: 'All Runs', count: runs.length, active: true },
-            { label: 'Completed', count: completed, color: '#10b981' },
-            { label: 'Running', count: running, color: '#3b82f6' },
-            { label: 'Failed', count: failed, color: '#ef4444' },
-          ].map((f) => (
+          {([
+            { label: 'All Runs' as RunFilter, count: allRuns.length },
+            { label: 'Completed' as RunFilter, count: completed, color: '#10b981' },
+            { label: 'Running' as RunFilter, count: running, color: '#3b82f6' },
+            { label: 'Failed' as RunFilter, count: failed, color: '#ef4444' },
+          ] as { label: RunFilter; count: number; color?: string }[]).map((f) => (
             <button
               key={f.label}
+              onClick={() => setActiveFilter(f.label)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors ${
-                f.active
+                activeFilter === f.label
                   ? 'bg-accent-blue text-white border-accent-blue'
                   : 'text-text-secondary border-border-default hover:text-text-primary hover:bg-bg-elevated'
               }`}

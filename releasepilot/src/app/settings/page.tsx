@@ -16,8 +16,8 @@ export default function SettingsPage() {
       items: [
         { label: 'Max Iterations per Run', value: '10' },
         { label: 'Parallel Workers', value: '4' },
-        { label: 'Auto-approve Low Severity Fixes', value: 'Enabled' },
-        { label: 'Require Approval for Releases', value: 'Enabled' },
+        { label: 'Automatic Approvals', value: 'Disabled — all changes require explicit human approval', ok: false, warn: true },
+        { label: 'Require Approval for Releases', value: 'Enabled', ok: true },
         { label: 'Test Coverage Threshold', value: '80%' },
       ],
     },
@@ -48,7 +48,11 @@ export default function SettingsPage() {
                   <span className="text-sm text-text-secondary">{item.label}</span>
                   <span
                     className="text-sm font-medium"
-                    style={{ color: ('ok' in item && item.ok) ? '#10b981' : '#f9fafb' }}
+                    style={{
+                      color: ('warn' in item && item.warn) ? '#f59e0b'
+                        : ('ok' in item && item.ok) ? '#10b981'
+                        : '#f9fafb',
+                    }}
                   >
                     {item.value}
                   </span>

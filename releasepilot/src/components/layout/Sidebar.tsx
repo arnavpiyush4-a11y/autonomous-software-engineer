@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { MOCK_RUNS, MOCK_REPOSITORIES } from '@/lib/mock-data';
 
 interface NavItem {
   href: string;
@@ -83,11 +84,17 @@ function IconNexus() {
   );
 }
 
+const ACTIVE_RUNS = MOCK_RUNS.filter((r) => r.status === 'RUNNING');
+const ACTIVE_RUN_COUNT = ACTIVE_RUNS.length;
+const ACTIVE_RUN_REPO_NAME = ACTIVE_RUNS.length > 0
+  ? (MOCK_REPOSITORIES.find((r) => r.id === ACTIVE_RUNS[0].repositoryId)?.name ?? ACTIVE_RUNS[0].repositoryId)
+  : null;
+
 const NAV_ITEMS: NavItem[] = [
   { href: '/',               label: 'Dashboard',    icon: <IconDashboard /> },
   { href: '/nexus',          label: 'Nexus',        icon: <IconNexus /> },
-  { href: '/repositories',   label: 'Repositories', icon: <IconRepositories />, badge: 4 },
-  { href: '/runs',           label: 'Agent Runs',   icon: <IconRuns />, badge: 1 },
+  { href: '/repositories',   label: 'Repositories', icon: <IconRepositories />, badge: MOCK_REPOSITORIES.length },
+  { href: '/runs',           label: 'Agent Runs',   icon: <IconRuns />, badge: ACTIVE_RUN_COUNT > 0 ? ACTIVE_RUN_COUNT : undefined },
   { href: '/onboard',        label: 'Connect Repo', icon: <IconBolt /> },
   { href: '/demo',           label: 'Judge Demo',   icon: <IconDemo /> },
   { href: '/settings',       label: 'Settings',     icon: <IconSettings /> },
@@ -160,24 +167,41 @@ export default function Sidebar() {
 
         {/* Active run status indicator */}
         <div className="mt-auto">
-          <div className="bg-bg-elevated border border-border-default rounded-xl p-3">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-blue opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-blue" />
-              </span>
-              <span className="text-xs font-semibold text-text-primary">1 Run Active</span>
+          {ACTIVE_RUN_COUNT > 0 ? (
+            <div className="bg-bg-elevated border border-border-default rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-blue opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-blue" />
+                </span>
+                <span className="text-xs font-semibold text-text-primary">
+                  {ACTIVE_RUN_COUNT} Run{ACTIVE_RUN_COUNT !== 1 ? 's' : ''} Active
+                </span>
+              </div>
+              <p className="text-2xs text-text-muted leading-relaxed">
+                {ACTIVE_RUN_REPO_NAME} analysis in progress…
+              </p>
+              <Link
+                href="/runs"
+                className="mt-2 block text-2xs font-semibold text-accent-blue hover:underline"
+              >
+                View runs →
+              </Link>
             </div>
-            <p className="text-2xs text-text-muted leading-relaxed">
-              Notification Hub analysis in progress…
-            </p>
-            <Link
-              href="/runs"
-              className="mt-2 block text-2xs font-semibold text-accent-blue hover:underline"
-            >
-              View runs →
-            </Link>
-          </div>
+          ) : (
+            <div className="bg-bg-elevated border border-border-default rounded-xl p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="relative flex h-2 w-2">
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-status-success" />
+                </span>
+                <span className="text-xs font-semibold text-text-primary">All Clear</span>
+              </div>
+              <p className="text-2xs text-text-muted leading-relaxed">No runs currently active.</p>
+              <Link href="/runs/new" className="mt-2 block text-2xs font-semibold text-accent-blue hover:underline">
+                Start a run →
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
 

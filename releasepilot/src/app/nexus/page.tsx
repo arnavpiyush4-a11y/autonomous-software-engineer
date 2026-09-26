@@ -89,15 +89,19 @@ function ArchitectureGraph({
   selectedNodeId,
   onSelectNode,
   impactNodeIds,
+  instanceId = 'arch',
 }: {
   nodes: NexusNode[];
   edges: NexusEdge[];
   selectedNodeId: string | null;
   onSelectNode: (id: string | null) => void;
   impactNodeIds: Set<string>;
+  instanceId?: string;
 }) {
   const W = 700;
   const H = 330;
+  const gridId = `nexus-grid-${instanceId}`;
+  const glowId = `node-glow-${instanceId}`;
 
   return (
     <svg
@@ -109,15 +113,15 @@ function ArchitectureGraph({
     >
       {/* Grid background */}
       <defs>
-        <pattern id="nexus-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+        <pattern id={gridId} width="30" height="30" patternUnits="userSpaceOnUse">
           <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="0.5"/>
         </pattern>
-        <filter id="node-glow">
+        <filter id={glowId}>
           <feGaussianBlur stdDeviation="3" result="blur"/>
           <feComposite in="SourceGraphic" in2="blur" operator="over"/>
         </filter>
       </defs>
-      <rect width={W} height={H} fill="url(#nexus-grid)" rx="12"/>
+      <rect width={W} height={H} fill={`url(#${gridId})`} rx="12"/>
 
       {/* Edges */}
       {edges.map((edge) => {
@@ -681,6 +685,7 @@ export default function NexusPage() {
                   selectedNodeId={selectedNodeId}
                   onSelectNode={setSelectedNodeId}
                   impactNodeIds={impactNodeIds}
+                  instanceId="arch-main"
                 />
               </div>
 
@@ -761,6 +766,7 @@ export default function NexusPage() {
                   selectedNodeId={selectedNodeId}
                   onSelectNode={setSelectedNodeId}
                   impactNodeIds={impactNodeIds}
+                  instanceId="arch-impact"
                 />
               </div>
 
@@ -799,19 +805,31 @@ export default function NexusPage() {
             <div className="rounded-2xl border border-slate-700/50 bg-slate-800/20 p-5">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-sm font-semibold text-slate-200">Release Confidence Engine</h2>
+                  <h2 className="text-sm font-semibold text-slate-200">
+                    Release Confidence Engine
+                    {showBeforeConf && <span className="ml-2 text-xs font-normal text-red-400">(Pre-Fix)</span>}
+                    {!showBeforeConf && <span className="ml-2 text-xs font-normal text-emerald-400">(Post-Fix)</span>}
+                  </h2>
                   <p className="text-xs text-slate-500 mt-0.5">Explainable score from real evidence</p>
                 </div>
                 <button
                   onClick={() => setShowBeforeConf((b) => !b)}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-600/50 text-slate-400 hover:text-slate-200 transition-colors"
+                  className={`text-xs px-3 py-1.5 rounded-lg border transition-colors ${
+                    showBeforeConf
+                      ? 'border-emerald-500/40 text-emerald-400 hover:text-emerald-200'
+                      : 'border-slate-600/50 text-slate-400 hover:text-slate-200'
+                  }`}
                 >
-                  {showBeforeConf ? 'Show After Fix' : 'Show Before Fix'}
+                  {showBeforeConf ? '\u2713 Show After Fix' : 'Show Before Fix'}
                 </button>
               </div>
-              {showBeforeConf && (
+              {showBeforeConf ? (
                 <div className="mb-3 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2">
                   <p className="text-xs text-red-400">Showing PRE-FIX state — 6 issues open, CVE present, 3 tests failing</p>
+                </div>
+              ) : (
+                <div className="mb-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2">
+                  <p className="text-xs text-emerald-400">Showing POST-FIX state — all issues resolved, 0 blockers</p>
                 </div>
               )}
               <ConfidencePanel conf={postConf} showBefore={showBeforeConf} />

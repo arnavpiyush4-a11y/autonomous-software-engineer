@@ -83,6 +83,27 @@ const DEMO_REPOS = [
   },
 ];
 
+// ─── GitHub URL validation (BUG-15) ─────────────────────────────────────────
+
+/** Returns a parsed { owner, repo } or an error string. */
+function parseGitHubUrl(raw: string): { owner: string; repo: string } | string {
+  if (!raw.trim()) return 'Enter a GitHub URL or select a demo repository.';
+  let parsed: URL;
+  try {
+    parsed = new URL(raw.trim());
+  } catch {
+    return 'Enter a valid URL (e.g. https://github.com/owner/repository).';
+  }
+  if (parsed.protocol !== 'https:') return 'Only HTTPS GitHub URLs are accepted.';
+  if (parsed.hostname !== 'github.com') return 'Only github.com repositories are supported.';
+  if (parsed.username || parsed.password) return 'URLs must not contain credentials.';
+  const parts = parsed.pathname.replace(/^\//, '').replace(/\/$/, '').split('/');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) {
+    return 'URL must be in the form https://github.com/owner/repository.';
+  }
+  return { owner: parts[0], repo: parts[1] };
+}
+
 // ─── URL input step ──────────────────────────────────────────────────────────
 
 interface InputStepProps {
@@ -95,11 +116,10 @@ function InputStep({ onSubmit }: InputStepProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const trimmed = url.trim();
-    if (!trimmed) { setError('Enter a GitHub URL or select a demo repository.'); return; }
-    if (!trimmed.startsWith('http')) { setError('Please enter a valid HTTPS URL.'); return; }
+    const result = parseGitHubUrl(url);
+    if (typeof result === 'string') { setError(result); return; }
     setError('');
-    onSubmit(trimmed, '');
+    onSubmit(url.trim(), ''); // empty repoId → custom repo path
   }
 
   function handleDemo(id: string, repoUrl: string) {
@@ -333,12 +353,20 @@ function AnalyzingStep({ repoUrl, onComplete }: AnalyzingStepProps) {
 // ─── Complete step ────────────────────────────────────────────────────────────
 
 interface CompleteStepProps {
-  repoId: string;
+  repoId: string;      // non-empty = seeded demo repo; empty = custom URL
+  repoUrl: string;     // always the original URL the user entered
 }
 
-function CompleteStep({ repoId }: CompleteStepProps) {
+function CompleteStep({ repoId, repoUrl }: CompleteStepProps) {
   const router = useRouter();
-  const repo = MOCK_REPOSITORIES.find((r) => r.id === repoId) ?? MOCK_REPOSITORIES[0];
+  const isDemo = !!repoId; // true = seeded demo, false = custom URL
+  const demoRepo = MOCK_REPOSITORIES.find((r) => r.id === repoId);
+
+  // Parse owner/repo from the entered URL for display purposes
+  const parsed = parseGitHubUrl(repoUrl);
+  const customLabel = typeof parsed === 'object'
+    ? `${parsed.owner}/${parsed.repo}`
+    : repoUrl;
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -351,19 +379,41 @@ function CompleteStep({ repoId }: CompleteStepProps) {
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-text-primary mb-1">Repository Ready</h1>
-        <p className="text-sm text-text-secondary">{repo.name} has been analyzed and onboarded.</p>
+        <h1 className="text-xl font-bold text-text-primary mb-1">
+          {isDemo ? 'Repository Ready' : 'Demo Preview'}
+        </h1>
+        <p className="text-sm text-text-secondary">
+          {isDemo
+            ? `${demoRepo?.name ?? 'E-Commerce Platform'} has been analyzed and onboarded.`
+            : <><code className="font-mono text-accent-blue">{customLabel}</code> — simulated analysis preview</>
+          }
+        </p>
       </div>
+
+      {/* BUG-06: show disclaimer when custom URL entered */}
+      {!isDemo && (
+        <div className="mb-5 rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 flex items-start gap-3">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" strokeWidth="2" className="mt-0.5 flex-shrink-0">
+            <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+          <p className="text-xs text-amber-300 leading-relaxed">
+            <span className="font-semibold">Demo Preview</span> — No real repository was cloned or analyzed.
+            The metrics below are from the E-Commerce Platform fixture and are shown for demonstration purposes only.
+            Real analysis would require a connected GitHub App or token.
+          </p>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         {[
-          { label: 'Files Scanned', value: '312', icon: '📁' },
-          { label: 'Health Score', value: '67/100', icon: '🏥', warn: true },
-          { label: 'Issues Found', value: '6', icon: '🐛', warn: true },
-          { label: 'Tests', value: '145 (3 failing)', icon: '🧪', warn: true },
-          { label: 'Dependencies', value: '87 (1 CVE)', icon: '📦', warn: true },
-          { label: 'Coverage', value: '71.4%', icon: '📊' },
+          { label: 'Files Scanned', value: isDemo ? '312' : '~312', icon: '📁' },
+          { label: 'Health Score', value: isDemo ? '67/100' : 'Demo: 67/100', icon: '🏥', warn: true },
+          { label: 'Issues Found', value: isDemo ? '6' : 'Demo: 6', icon: '🐛', warn: true },
+          { label: 'Tests', value: isDemo ? '145 (3 failing)' : 'Demo: 145', icon: '🧪', warn: true },
+          { label: 'Dependencies', value: isDemo ? '87 (1 CVE)' : 'Demo: 87', icon: '📦', warn: true },
+          { label: 'Coverage', value: isDemo ? '71.4%' : 'Demo: 71.4%', icon: '📊' },
         ].map((stat) => (
           <div
             key={stat.label}
@@ -374,10 +424,7 @@ function CompleteStep({ repoId }: CompleteStepProps) {
             }}
           >
             <p className="text-2xs text-text-muted mb-1">{stat.icon} {stat.label}</p>
-            <p
-              className="text-lg font-bold"
-              style={{ color: stat.warn ? '#fbbf24' : '#34d399' }}
-            >
+            <p className="text-lg font-bold" style={{ color: stat.warn ? '#fbbf24' : '#34d399' }}>
               {stat.value}
             </p>
           </div>
@@ -386,48 +433,56 @@ function CompleteStep({ repoId }: CompleteStepProps) {
 
       {/* Call to actions */}
       <div className="space-y-3">
-        <button
-          onClick={() => router.push(`/repositories/${repo.id}`)}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-xl border text-left transition-colors hover:opacity-90"
-          style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
-        >
-          <div>
-            <p className="text-sm font-semibold text-white">View Repository Details</p>
-            <p className="text-xs text-blue-200 mt-0.5">Architecture map, onboarding guide, findings</p>
+        {isDemo ? (
+          <button
+            onClick={() => router.push(`/repositories/${repoId}`)}
+            className="w-full flex items-center justify-between px-5 py-4 rounded-xl border text-left transition-colors hover:opacity-90"
+            style={{ backgroundColor: '#3b82f6', borderColor: '#3b82f6' }}
+          >
+            <div>
+              <p className="text-sm font-semibold text-white">View Demo Repository</p>
+              <p className="text-xs text-blue-200 mt-0.5">Architecture map, onboarding guide, findings</p>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+        ) : (
+          <div className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-border-default bg-bg-elevated cursor-default">
+            <div>
+              <p className="text-sm font-semibold text-text-primary">{customLabel}</p>
+              <p className="text-xs text-text-muted mt-0.5">Simulated preview only — no real data available</p>
+            </div>
           </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
-        </button>
+        )}
 
         <button
           onClick={() => router.push(`/runs/run_01`)}
           className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-border-default bg-bg-surface text-left transition-colors hover:bg-bg-elevated"
         >
           <div>
-            <p className="text-sm font-semibold text-text-primary">View Completed Agent Run</p>
-            <p className="text-xs text-text-muted mt-0.5">See how ReleasePilot fixed all 6 issues</p>
+            <p className="text-sm font-semibold text-text-primary">View Demo Agent Run</p>
+            <p className="text-xs text-text-muted mt-0.5">See how ReleasePilot fixed all 6 issues in the demo</p>
           </div>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
+            <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
           </svg>
         </button>
 
-        <button
-          onClick={() => router.push(`/runs/new?repo=${repo.id}`)}
-          className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-status-success/25 bg-status-success/5 text-left transition-colors hover:bg-status-success/10"
-        >
-          <div>
-            <p className="text-sm font-semibold text-status-success">Start New Agent Run</p>
-            <p className="text-xs text-text-muted mt-0.5">Let ReleasePilot autonomously resolve all issues</p>
-          </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
-        </button>
+        {isDemo && (
+          <button
+            onClick={() => router.push(`/runs/new?repo=${repoId}`)}
+            className="w-full flex items-center justify-between px-5 py-4 rounded-xl border border-status-success/25 bg-status-success/5 text-left transition-colors hover:bg-status-success/10"
+          >
+            <div>
+              <p className="text-sm font-semibold text-status-success">Start New Agent Run</p>
+              <p className="text-xs text-text-muted mt-0.5">Let ReleasePilot autonomously resolve all issues</p>
+            </div>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+              <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );
@@ -442,7 +497,8 @@ export default function OnboardPage() {
 
   function handleSubmit(url: string, id: string) {
     setRepoUrl(url);
-    setRepoId(id || 'repo_ecommerce');
+    // BUG-06: keep empty repoId for custom URLs so CompleteStep can show the right label
+    setRepoId(id); // empty string = custom repo
     setStep('analyzing');
   }
 
@@ -497,7 +553,7 @@ export default function OnboardPage() {
         {/* Step content */}
         {step === 'input' && <InputStep onSubmit={handleSubmit} />}
         {step === 'analyzing' && <AnalyzingStep repoUrl={repoUrl} onComplete={handleAnalysisComplete} />}
-        {step === 'complete' && <CompleteStep repoId={repoId} />}
+        {step === 'complete' && <CompleteStep repoId={repoId} repoUrl={repoUrl} />}
       </div>
     </div>
   );

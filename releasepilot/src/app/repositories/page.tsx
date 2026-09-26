@@ -1,8 +1,10 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
 import TopBar from '@/components/layout/TopBar';
 import { MOCK_REPOSITORIES, MOCK_RUNS } from '@/lib/mock-data';
 import { LanguageBadge } from '@/components/ui/Badge';
-import { HealthScoreChip } from '@/components/ui/StatusChip';
 import StatusChip from '@/components/ui/StatusChip';
 import ProgressBar from '@/components/ui/ProgressBar';
 import type { RunStatus } from '@/lib/types';
@@ -34,7 +36,11 @@ function IconExternalLink() {
   );
 }
 
+type RepoFilter = 'All' | 'Healthy' | 'At Risk' | 'Running';
+
 export default function RepositoriesPage() {
+  const [activeFilter, setActiveFilter] = useState<RepoFilter>('All');
+
   const latestRunByRepo: Record<string, RunStatus> = {};
   for (const run of MOCK_RUNS) {
     if (!latestRunByRepo[run.repositoryId]) {
@@ -42,7 +48,15 @@ export default function RepositoriesPage() {
     }
   }
 
-  const sorted = [...MOCK_REPOSITORIES].sort((a, b) => (a.healthScore ?? 0) - (b.healthScore ?? 0));
+  const allSorted = [...MOCK_REPOSITORIES].sort((a, b) => (a.healthScore ?? 0) - (b.healthScore ?? 0));
+
+  const sorted = allSorted.filter((repo) => {
+    if (activeFilter === 'All') return true;
+    if (activeFilter === 'Healthy') return (repo.healthScore ?? 0) >= 85;
+    if (activeFilter === 'At Risk') return (repo.healthScore ?? 0) < 85;
+    if (activeFilter === 'Running') return latestRunByRepo[repo.id] === 'RUNNING';
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-bg-base">
@@ -56,11 +70,12 @@ export default function RepositoriesPage() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             {/* Filter pills */}
-            {['All', 'Healthy', 'At Risk', 'Running'].map((f, i) => (
+            {(['All', 'Healthy', 'At Risk', 'Running'] as RepoFilter[]).map((f) => (
               <button
                 key={f}
+                onClick={() => setActiveFilter(f)}
                 className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
-                  i === 0
+                  activeFilter === f
                     ? 'bg-accent-blue text-white border-accent-blue'
                     : 'text-text-secondary border-border-default hover:text-text-primary hover:bg-bg-elevated'
                 }`}

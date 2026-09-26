@@ -104,6 +104,14 @@ const LOG_INTERVAL = 700;
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Truncate text and append ellipsis only when truncation actually occurs. */
+function truncateTask(text: string, max = 70): string {
+  const trimmed = text.trim();
+  return trimmed.length > max ? `${trimmed.slice(0, max)}\u2026` : trimmed;
+}
+
 function ActionLabelBadge({ label }: { label: LogEntry['label'] }) {
   if (!label) return null;
   const cfg: Record<string, { bg: string; text: string }> = {
@@ -122,7 +130,8 @@ function ActionLabelBadge({ label }: { label: LogEntry['label'] }) {
 
 function LogLine({ entry }: { entry: LogEntry }) {
   const colors = { INFO: '#9ca3af', WARN: '#fbbf24', ERROR: '#f87171', SUCCESS: '#34d399' };
-  const pfx = { INFO: '  ', WARN: '⚠ ', ERROR: '✗ ', SUCCESS: '✓ ' };
+  // BUG-07: use Unicode escapes to prevent encoding artifacts
+  const pfx = { INFO: '  ', WARN: '\u26A0\uFE0F ', ERROR: '\u2717 ', SUCCESS: '\u2713 ' };
   return (
     <div className="flex items-start gap-2 py-0.5 text-xs font-mono">
       <span className="flex-shrink-0" style={{ color: '#4b5563', minWidth: '52px' }}>{entry.ts}</span>
@@ -403,6 +412,7 @@ export default function NewRunPageInner() {
   const [taskInput, setTaskInput] = useState(
     'Prepare this project for release and resolve all issues necessary to make it production-ready.'
   );
+  const [taskError, setTaskError] = useState('');
   const [currentStageIdx, setCurrentStageIdx] = useState(-1);
   const [completedStages, setCompletedStages] = useState<number[]>([]);
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -411,6 +421,7 @@ export default function NewRunPageInner() {
   const logEndRef = useRef<HTMLDivElement>(null);
   const runningRef = useRef(false);
   const approvalResolveRef = useRef<((decision: string) => void) | null>(null);
+  // New unique run ID is generated each time the user starts a run (see resetRun)
   const runIdRef = useRef(`run_live_${Date.now()}`);
 
   useEffect(() => {
@@ -421,7 +432,31 @@ export default function NewRunPageInner() {
 
   function sleep(ms: number) { return new Promise<void>((r) => setTimeout(r, ms)); }
 
+  /** Reset all run state so the user can start again without a page reload. */
+  function resetRun() {
+    // Abort any pending approval promise so the old async chain exits cleanly
+    if (approvalResolveRef.current) {
+      approvalResolveRef.current('__RESET__');
+      approvalResolveRef.current = null;
+    }
+    runningRef.current = false;
+    runIdRef.current = `run_live_${Date.now()}`;
+    setPhase('IDLE');
+    setLogs([]);
+    setCompletedStages([]);
+    setCurrentStageIdx(-1);
+    setApprovalDecision(null);
+    setTaskError('');
+  }
+
   async function startRun() {
+    // BUG-17: validate task input before starting
+    if (!taskInput.trim()) {
+      setTaskError('Please enter a task before starting.');
+      return;
+    }
+    setTaskError('');
+
     if (runningRef.current) return;
     runningRef.current = true;
     setPhase('RUNNING');
@@ -429,13 +464,9 @@ export default function NewRunPageInner() {
     setCompletedStages([]);
     setCurrentStageIdx(-1);
 
-    // Seed approval request in API
-    await fetch(`/api/runs/${runIdRef.current}/approve`, {
-      method: 'GET',
-    }).catch(() => {}); // no-op if offline
-
     await sleep(600);
-    addLog({ id: -1, ts: '14:00:00', stage: 'Planner', level: 'INFO', label: null, message: `Task received — "${taskInput.slice(0, 70)}…"` });
+    // BUG-08: ellipsis only when text is actually truncated
+    addLog({ id: -1, ts: '14:00:00', stage: 'Planner', level: 'INFO', label: null, message: `Task received \u2014 \u201c${truncateTask(taskInput)}\u201d` });
     await sleep(500);
     addLog({ id: -2, ts: '14:00:01', stage: 'Planner', level: 'INFO', label: 'ANALYZED', message: 'Scope: auth, cart, checkout, deps, docs — HIGH risk' });
     await sleep(500);
@@ -474,9 +505,15 @@ export default function NewRunPageInner() {
 
         approvalResolveRef.current = null;
 
+        // BUG-03/__RESET__: if the user resets mid-run, exit cleanly
+        if (decision === '__RESET__') {
+          runningRef.current = false;
+          return;
+        }
+
         if (decision === 'REJECTED') {
           setPhase('COMPLETED'); // show cancelled state
-          addLog({ id: 1001, ts: '14:06:50', stage: 'Planner', level: 'ERROR', label: null, message: '✗ Run rejected by user — no changes applied' });
+          addLog({ id: 1001, ts: '14:06:50', stage: 'Planner', level: 'ERROR', label: null, message: '\u2717 Run rejected by user \u2014 no changes applied' });
           setCurrentStageIdx(-1);
           runningRef.current = false;
           return;
@@ -484,7 +521,7 @@ export default function NewRunPageInner() {
 
         if (decision === 'CHANGES_REQUESTED') {
           setPhase('COMPLETED');
-          addLog({ id: 1001, ts: '14:06:50', stage: 'Planner', level: 'WARN', label: null, message: '⚠ Changes requested — run blocked. Review comments and restart.' });
+          addLog({ id: 1001, ts: '14:06:50', stage: 'Planner', level: 'WARN', label: null, message: '\u26A0\uFE0F Changes requested \u2014 run blocked. Review comments and restart.' });
           setCurrentStageIdx(-1);
           runningRef.current = false;
           return;
@@ -492,7 +529,7 @@ export default function NewRunPageInner() {
 
         // APPROVED
         setPhase('CONTINUING');
-        addLog({ id: 1000, ts: '14:06:48', stage: 'Planner', level: 'SUCCESS', label: null, message: '✓ Approved by user — applying proposed fixes now' });
+        addLog({ id: 1000, ts: '14:06:48', stage: 'Planner', level: 'SUCCESS', label: null, message: '\u2713 Approved by user \u2014 applying proposed fixes now' });
         await sleep(500);
         setPhase('RUNNING');
       }
@@ -556,15 +593,26 @@ export default function NewRunPageInner() {
               <h3 className="text-sm font-semibold text-text-primary mb-3">Task</h3>
               <textarea
                 value={taskInput}
-                onChange={(e) => setTaskInput(e.target.value)}
+                onChange={(e) => { setTaskInput(e.target.value); if (taskError) setTaskError(''); }}
                 disabled={phase !== 'IDLE'}
                 rows={4}
+                aria-describedby={taskError ? 'task-error' : undefined}
+                aria-invalid={!!taskError}
                 className="w-full text-sm rounded-lg px-3 py-2.5 resize-none focus:outline-none"
-                style={{ backgroundColor: '#0d1117', border: '1px solid #1f2937', color: '#e6edf3' }}
+                style={{ backgroundColor: '#0d1117', border: `1px solid ${taskError ? '#ef4444' : '#1f2937'}`, color: '#e6edf3' }}
               />
+              {/* BUG-17: inline validation error */}
+              {taskError && (
+                <p id="task-error" role="alert" className="mt-1.5 text-xs" style={{ color: '#f87171' }}>{taskError}</p>
+              )}
 
               {phase === 'IDLE' && (
-                <button onClick={() => setPhase('SCOPING')}
+                <button
+                  onClick={() => {
+                    if (!taskInput.trim()) { setTaskError('Please enter a task before starting.'); return; }
+                    setTaskError('');
+                    setPhase('SCOPING');
+                  }}
                   className="w-full mt-3 py-2.5 text-sm font-semibold text-white rounded-lg hover:opacity-90"
                   style={{ backgroundColor: '#3b82f6' }}>
                   Analyze Scope →
@@ -593,19 +641,27 @@ export default function NewRunPageInner() {
               )}
 
               {isDone && (
-                <div className="mt-3 p-3 rounded-lg text-center"
+                <div className="mt-3 p-3 rounded-lg text-center space-y-2"
                   style={{
                     backgroundColor: isApproved ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.08)',
                     border: `1px solid ${isApproved ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.2)'}`,
                   }}>
                   <p className="text-sm font-semibold" style={{ color: isApproved ? '#10b981' : '#ef4444' }}>
-                    {isApproved ? '✓ Run Completed' : approvalDecision === 'REJECTED' ? '✗ Run Rejected' : '⚠ Changes Requested'}
+                    {isApproved ? '\u2713 Run Completed' : approvalDecision === 'REJECTED' ? '\u2717 Run Rejected' : '\u26A0\uFE0F Changes Requested'}
                   </p>
                   {isApproved && (
-                    <button onClick={() => router.push('/runs/run_01')} className="mt-1 text-xs font-semibold text-accent-blue hover:underline">
+                    <button onClick={() => router.push('/runs/run_01')} className="text-xs font-semibold text-accent-blue hover:underline block mx-auto">
                       View full report →
                     </button>
                   )}
+                  {/* BUG-03: restart after terminal state */}
+                  <button
+                    onClick={resetRun}
+                    className="text-xs font-semibold rounded-lg px-3 py-1.5 border transition-colors"
+                    style={{ borderColor: 'rgba(75,85,99,0.5)', color: '#9ca3af', backgroundColor: 'rgba(31,41,55,0.6)' }}
+                  >
+                    {isApproved ? 'Start another run' : 'Try again'}
+                  </button>
                 </div>
               )}
             </div>

@@ -37,7 +37,7 @@ const COMMANDS: Command[] = [
   {
     id: 'cmd_demo',
     label: 'Judge Demo Guide',
-    description: '7-step guided demo walkthrough',
+    description: '9-step guided demo walkthrough',
     icon: '▶',
     action: '/demo',
     category: 'Demo',

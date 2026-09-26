@@ -1619,6 +1619,330 @@
       "metadata": {},
       "actionLabel": "EXECUTED",
       "id": "audit_1790440725646_5ui64n"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.869Z",
+      "status": "COMPLETED",
+      "message": "Test event",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052870_x1yx2d"
+    },
+    {
+      "kind": "TEST_RESULT",
+      "actor": "test-suite",
+      "timestamp": "2026-09-26T18:07:32.870Z",
+      "status": "PASS",
+      "message": "All tests passed",
+      "metadata": {
+        "passing": 27
+      },
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446052872_ywiybt"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.872Z",
+      "status": "OK",
+      "message": "Event 0",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052873_2om30t"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.874Z",
+      "status": "OK",
+      "message": "Event 1",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052874_tb5q02"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.874Z",
+      "status": "OK",
+      "message": "Event 2",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052874_a4lr27"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.875Z",
+      "status": "OK",
+      "message": "Event 3",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052875_0qt3pj"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.875Z",
+      "status": "OK",
+      "message": "Event 4",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052875_90rzqw"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.876Z",
+      "status": "OK",
+      "message": "Event 5",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052876_26438l"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.876Z",
+      "status": "OK",
+      "message": "Event 6",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052876_itjycw"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.877Z",
+      "status": "OK",
+      "message": "Event 7",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052877_2a6w28"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.877Z",
+      "status": "OK",
+      "message": "Event 8",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052877_kpo0yv"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:07:32.878Z",
+      "status": "OK",
+      "message": "Event 9",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446052878_rge0t2"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "a",
+      "timestamp": "2024-01-01T00:00:00Z",
+      "status": "OK",
+      "message": "first",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446052879_egg471"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "b",
+      "timestamp": "2024-01-02T00:00:00Z",
+      "status": "OK",
+      "message": "second",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446052880_hytygo"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "x",
+      "timestamp": "2026-09-26T18:07:32.890Z",
+      "status": "OK",
+      "message": "m",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446052891_a3aap6"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "y",
+      "timestamp": "2026-09-26T18:07:32.892Z",
+      "status": "OK",
+      "message": "m",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446052892_8d4z6n"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.735Z",
+      "status": "COMPLETED",
+      "message": "Test event",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212736_8vapki"
+    },
+    {
+      "kind": "TEST_RESULT",
+      "actor": "test-suite",
+      "timestamp": "2026-09-26T18:10:12.737Z",
+      "status": "PASS",
+      "message": "All tests passed",
+      "metadata": {
+        "passing": 27
+      },
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446212739_917kss"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.739Z",
+      "status": "OK",
+      "message": "Event 0",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212740_zdrazq"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.741Z",
+      "status": "OK",
+      "message": "Event 1",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212741_03uy6r"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.741Z",
+      "status": "OK",
+      "message": "Event 2",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212741_26i9ci"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.742Z",
+      "status": "OK",
+      "message": "Event 3",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212742_re5y2d"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.742Z",
+      "status": "OK",
+      "message": "Event 4",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212742_pq8ilp"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.743Z",
+      "status": "OK",
+      "message": "Event 5",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212743_b5zo8x"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.743Z",
+      "status": "OK",
+      "message": "Event 6",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212743_af3cmh"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.744Z",
+      "status": "OK",
+      "message": "Event 7",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212744_0ota9s"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.744Z",
+      "status": "OK",
+      "message": "Event 8",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212744_yikxgo"
+    },
+    {
+      "kind": "WORKFLOW_TRANSITION",
+      "actor": "test",
+      "timestamp": "2026-09-26T18:10:12.745Z",
+      "status": "OK",
+      "message": "Event 9",
+      "metadata": {},
+      "actionLabel": "ANALYZED",
+      "id": "audit_1790446212745_i3gqr4"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "a",
+      "timestamp": "2024-01-01T00:00:00Z",
+      "status": "OK",
+      "message": "first",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446212746_4ybiq1"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "b",
+      "timestamp": "2024-01-02T00:00:00Z",
+      "status": "OK",
+      "message": "second",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446212747_wnpj0y"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "x",
+      "timestamp": "2026-09-26T18:10:12.748Z",
+      "status": "OK",
+      "message": "m",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446212750_elglez"
+    },
+    {
+      "kind": "DEMO_RESET",
+      "actor": "y",
+      "timestamp": "2026-09-26T18:10:12.751Z",
+      "status": "OK",
+      "message": "m",
+      "metadata": {},
+      "actionLabel": "EXECUTED",
+      "id": "audit_1790446212751_ny6ewe"
     }
   ],
   "proofRuns": [],

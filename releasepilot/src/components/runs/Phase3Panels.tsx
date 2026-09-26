@@ -402,7 +402,7 @@ export function ApprovalStatusPanel({ request }: { request: ApprovalRequest }) {
                 {request.resolvedAt ? new Date(request.resolvedAt).toLocaleString() : ''}
               </span>
             </div>
-            {request.comment && <p className="text-xs text-text-secondary italic">"{request.comment}"</p>}
+            {request.comment && <p className="text-xs text-text-secondary italic">&ldquo;{request.comment}&rdquo;</p>}
           </div>
         )}
       </div>

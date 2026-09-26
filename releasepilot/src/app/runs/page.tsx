@@ -170,7 +170,7 @@ export default function RunsPage() {
               <span
                 className="text-2xs font-bold px-1.5 py-0.5 rounded-full"
                 style={
-                  f.active
+                  activeFilter === f.label
                     ? { backgroundColor: 'rgba(255,255,255,0.25)', color: 'white' }
                     : { backgroundColor: 'rgba(107,114,128,0.2)', color: '#9ca3af' }
                 }

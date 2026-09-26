@@ -170,7 +170,7 @@ export default async function RunDetailPage({ params }: PageProps) {
               <p className="text-xs text-text-muted mb-1 font-medium">Task:</p>
               <p className="text-sm text-text-secondary max-w-2xl leading-relaxed">{task}</p>
               {run.summary && (
-                <p className="text-xs text-text-muted mt-2 max-w-2xl leading-relaxed italic">"{run.summary}"</p>
+                <p className="text-xs text-text-muted mt-2 max-w-2xl leading-relaxed italic">&ldquo;{run.summary}&rdquo;</p>
               )}
             </div>
 

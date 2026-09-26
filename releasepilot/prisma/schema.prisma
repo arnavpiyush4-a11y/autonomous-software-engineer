@@ -1,0 +1,296 @@
+// ReleasePilot AI — Prisma Schema
+// PostgreSQL + Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ─────────────────────────────────────────────────────────────────
+
+enum RunStatus {
+  QUEUED
+  RUNNING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum StageStatus {
+  PENDING
+  ACTIVE
+  DONE
+  FAILED
+  SKIPPED
+}
+
+enum TaskStatus {
+  PENDING
+  IN_PROGRESS
+  DONE
+  FAILED
+  SKIPPED
+}
+
+enum FindingSeverity {
+  CRITICAL
+  HIGH
+  MEDIUM
+  LOW
+  INFO
+}
+
+enum FindingCategory {
+  BUG
+  TEST
+  COVERAGE
+  DEPENDENCY
+  DOCUMENTATION
+  CONFIGURATION
+  SECURITY
+  PERFORMANCE
+}
+
+enum FindingStatus {
+  OPEN
+  FIXED
+  WONT_FIX
+  FALSE_POSITIVE
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum AuditAction {
+  RUN_CREATED
+  RUN_STARTED
+  RUN_COMPLETED
+  RUN_FAILED
+  RUN_CANCELLED
+  STAGE_STARTED
+  STAGE_COMPLETED
+  FINDING_CREATED
+  FINDING_FIXED
+  APPROVAL_REQUESTED
+  APPROVAL_GRANTED
+  APPROVAL_REJECTED
+  REPORT_GENERATED
+  REPO_CONNECTED
+  SETTINGS_CHANGED
+}
+
+// ─── Core Models ───────────────────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  avatarUrl String?
+  role      String   @default("developer") // admin | developer | viewer
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  repositories Repository[]
+  approvals    Approval[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Repository {
+  id           String   @id @default(cuid())
+  name         String
+  fullName     String   @unique  // org/repo format
+  description  String?
+  url          String
+  defaultBranch String  @default("main")
+  languages    String[] // e.g. ["TypeScript", "JavaScript"]
+  techStack    String[] // e.g. ["React", "Express", "PostgreSQL"]
+  isActive     Boolean  @default(true)
+  healthScore  Int?     // 0-100
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  agentRuns AgentRun[]
+  findings  Finding[]
+
+  @@map("repositories")
+}
+
+model AgentRun {
+  id           String    @id @default(cuid())
+  status       RunStatus @default(QUEUED)
+  triggeredBy  String    @default("manual") // manual | scheduled | webhook
+  branch       String    @default("main")
+  commitSha    String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  durationMs   Int?      // total duration in milliseconds
+  summary      String?   // brief summary of what was done
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+
+  stages        WorkflowStage[]
+  findings      Finding[]
+  testResults   TestResult[]
+  releaseReport ReleaseReport?
+  approvals     Approval[]
+  auditLogs     AuditLog[]
+
+  @@map("agent_runs")
+}
+
+model WorkflowStage {
+  id          String      @id @default(cuid())
+  stageIndex  Int         // 0-based ordering
+  name        String      // e.g. "Repository Analysis"
+  slug        String      // e.g. "repo-analysis"
+  status      StageStatus @default(PENDING)
+  description String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  durationMs  Int?
+  output      Json?       // stage-specific structured output
+  errorMsg    String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id])
+
+  tasks Task[]
+
+  @@unique([agentRunId, stageIndex])
+  @@map("workflow_stages")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  name        String
+  status      TaskStatus @default(PENDING)
+  description String?
+  output      String?
+  startedAt   DateTime?
+  completedAt DateTime?
+  durationMs  Int?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  stageId String
+  stage   WorkflowStage @relation(fields: [stageId], references: [id])
+
+  @@map("tasks")
+}
+
+model Finding {
+  id          String          @id @default(cuid())
+  title       String
+  description String
+  severity    FindingSeverity
+  category    FindingCategory
+  status      FindingStatus   @default(OPEN)
+  filePath    String?
+  lineStart   Int?
+  lineEnd     Int?
+  suggestion  String?         // AI-generated fix suggestion
+  fixApplied  Boolean         @default(false)
+  fixDiff     String?         // git diff of the applied fix
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  repositoryId String
+  repository   Repository @relation(fields: [repositoryId], references: [id])
+
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id])
+
+  @@map("findings")
+}
+
+model TestResult {
+  id          String   @id @default(cuid())
+  suiteName   String
+  totalTests  Int
+  passing     Int
+  failing     Int
+  skipped     Int
+  coverage    Float?   // percentage 0-100
+  durationMs  Int?
+  snapshot    Boolean  @default(false) // true = before, false = after
+  rawOutput   String?
+  createdAt   DateTime @default(now())
+
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id])
+
+  @@map("test_results")
+}
+
+model ReleaseReport {
+  id                  String   @id @default(cuid())
+  healthScoreBefore   Int
+  healthScoreAfter    Int
+  findingsFound       Int
+  findingsFixed       Int
+  testPassingBefore   Int
+  testFailingBefore   Int
+  testPassingAfter    Int
+  testFailingAfter    Int
+  coverageBefore      Float?
+  coverageAfter       Float?
+  releaseReadiness    Int      // 0-100
+  changelog           String?  // generated changelog text
+  releaseNotes        String?  // polished release notes
+  recommendations     String[] // list of follow-up recommendations
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  agentRunId String    @unique
+  agentRun   AgentRun  @relation(fields: [agentRunId], references: [id])
+
+  @@map("release_reports")
+}
+
+model Approval {
+  id        String         @id @default(cuid())
+  status    ApprovalStatus @default(PENDING)
+  comment   String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  agentRunId String
+  agentRun   AgentRun @relation(fields: [agentRunId], references: [id])
+
+  approverId String
+  approver   User   @relation(fields: [approverId], references: [id])
+
+  @@map("approvals")
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  action    AuditAction
+  details   Json?
+  createdAt DateTime    @default(now())
+
+  agentRunId String?
+  agentRun   AgentRun? @relation(fields: [agentRunId], references: [id])
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}

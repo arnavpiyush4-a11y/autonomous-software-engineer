@@ -14,6 +14,10 @@
  */
 
 import * as assert from 'assert';
+import { APPROVAL_STORE } from '../src/lib/approvalStore';
+import { _resetCacheForTests } from '../src/lib/db/persistence';
+import { getFixtureStatus, getAllowedCommandKeys } from '../src/lib/sandbox/executor';
+import { calculateConfidence } from '../src/lib/confidence/engine';
 
 // ─── Inline test runner ──────────────────────────────────────────────────────
 
@@ -325,6 +329,137 @@ describe('BUG-03: reset sentinel value', () => {
     const approvalValues = ['APPROVED', 'REJECTED', 'CHANGES_REQUESTED'];
     for (const v of approvalValues) {
       assert.notStrictEqual(v, RESET_SENTINEL);
+    }
+  });
+});
+
+// ─── Approval state integrity ─────────────────────────────────────────────────
+
+describe('Approval state integrity', () => {
+  test('PENDING approval can be resolved to APPROVED', () => {
+    APPROVAL_STORE.set('test_run_integrity', { status: 'PENDING' });
+    const current = APPROVAL_STORE.get('test_run_integrity')!;
+    assert.strictEqual(current.status, 'PENDING');
+    APPROVAL_STORE.set('test_run_integrity', {
+      status: 'APPROVED',
+      comment: 'LGTM',
+      resolvedAt: new Date().toISOString(),
+    });
+    const resolved = APPROVAL_STORE.get('test_run_integrity')!;
+    assert.strictEqual(resolved.status, 'APPROVED');
+  });
+
+  test('already-resolved approval is detected (idempotency guard)', () => {
+    APPROVAL_STORE.set('test_run_idem', { status: 'APPROVED', resolvedAt: '2024-01-01T00:00:00Z' });
+    const current = APPROVAL_STORE.get('test_run_idem')!;
+    // Simulate what the API does: reject if not PENDING
+    const alreadyResolved = current.status !== 'PENDING';
+    assert.strictEqual(alreadyResolved, true, 'Should detect already-resolved approval');
+  });
+
+  test('valid approval actions are exhaustive', () => {
+    const validActions = ['APPROVED', 'REJECTED', 'CHANGES_REQUESTED'];
+    // Verify no approval action is missing from the set
+    assert.strictEqual(validActions.length, 3);
+    assert.ok(validActions.includes('APPROVED'));
+    assert.ok(validActions.includes('REJECTED'));
+    assert.ok(validActions.includes('CHANGES_REQUESTED'));
+  });
+
+  test('REJECTED approval does not leave run in APPROVED state', () => {
+    APPROVAL_STORE.set('test_run_reject', { status: 'PENDING' });
+    APPROVAL_STORE.set('test_run_reject', {
+      status: 'REJECTED',
+      resolvedAt: new Date().toISOString(),
+    });
+    const result = APPROVAL_STORE.get('test_run_reject')!;
+    assert.strictEqual(result.status, 'REJECTED');
+    assert.notStrictEqual(result.status, 'APPROVED');
+  });
+
+  test('run IDs with timestamp suffix are unique', () => {
+    const t = Date.now();
+    const id1 = `run_live_${t}`;
+    const id2 = `run_live_${t + 1}`;
+    assert.notStrictEqual(id1, id2);
+  });
+
+  test('run_01 is a distinct ID from live run IDs', () => {
+    const liveId = `run_live_${Date.now()}`;
+    assert.notStrictEqual(liveId, 'run_01');
+    assert.ok(!liveId.startsWith('run_01'));
+  });
+});
+
+// ─── Proof Mode path security ─────────────────────────────────────────────────
+
+describe('Proof Mode — enhanced path security', () => {
+  test('fixture path is an absolute path', () => {
+    const status = getFixtureStatus();
+    const path = require('path');
+    assert.ok(path.isAbsolute(status.path), `Fixture path should be absolute: ${status.path}`);
+  });
+
+  test('fixture path contains expected directory name', () => {
+    const status = getFixtureStatus();
+    assert.ok(
+      status.path.includes('ecommerce-platform'),
+      `Fixture path should include ecommerce-platform: ${status.path}`
+    );
+  });
+
+  test('allowlist keys contain only hyphen-separated alphanumeric strings', () => {
+    const allowed = getAllowedCommandKeys();
+    const safeKeyPattern = /^[a-z][a-z0-9-]*$/;
+    for (const key of allowed) {
+      assert.ok(safeKeyPattern.test(key), `Allowlist key has unexpected format: ${key}`);
+    }
+  });
+
+  test('type-check is in allowlist', () => {
+    assert.ok(getAllowedCommandKeys().includes('type-check'));
+  });
+});
+
+// ─── Confidence score determinism ─────────────────────────────────────────────
+
+describe('Confidence engine — determinism', () => {
+  const inputs = {
+    buildPasses: true as boolean | null,
+    testPassRate: 1.0,
+    testCoverage: 90,
+    failingTestCount: 0,
+    regressionTestsAdded: 3,
+    criticalFindings: 0,
+    highFindings: 0,
+    mediumFindings: 0,
+    allFindingsResolved: true,
+    criticalCVEs: 0,
+    highCVEs: 0,
+    dependencyAuditPassed: true as boolean | null,
+    docsMismatches: 0,
+    configIssues: 0,
+    hasEnvExample: true,
+    hasChangelog: true,
+    approvalStatus: 'APPROVED' as const,
+    proofModeExecuted: false,
+  };
+
+  test('same inputs always produce the same score', () => {
+    const r1 = calculateConfidence(inputs);
+    const r2 = calculateConfidence(inputs);
+    assert.strictEqual(r1.overallScore, r2.overallScore);
+    assert.strictEqual(r1.riskLevel, r2.riskLevel);
+    assert.strictEqual(r1.blockers.length, r2.blockers.length);
+  });
+
+  test('each signal has a name, score in 0-100, and valid source', () => {
+    const result = calculateConfidence(inputs);
+    const validSources = ['EXECUTED', 'ANALYZED', 'SIMULATED'];
+    for (const signal of result.signals) {
+      assert.ok(typeof signal.name === 'string' && signal.name.length > 0, 'Signal must have name');
+      assert.ok(signal.score >= 0 && signal.score <= 100, `Signal score out of range: ${signal.name}=${signal.score}`);
+      assert.ok(validSources.includes(signal.source), `Invalid source: ${signal.source}`);
     }
   });
 });

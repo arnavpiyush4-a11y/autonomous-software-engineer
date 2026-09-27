@@ -300,22 +300,36 @@ interface ApprovalModalProps {
 function ApprovalModal({ onApprove, runId }: ApprovalModalProps) {
   const [comment, setComment] = useState('');
   const [confirming, setConfirming] = useState<'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED' | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const handleAction = async (action: 'APPROVED' | 'REJECTED' | 'CHANGES_REQUESTED') => {
     setConfirming(action);
+    setApiError(null);
     try {
-      await fetch(`/api/runs/${runId}/approve`, {
+      const res = await fetch(`/api/runs/${runId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, comment }),
       });
+      if (!res.ok) {
+        const data = await res.json() as { error?: string };
+        const message = data.error ?? `Approval API returned ${res.status}`;
+        setApiError(message);
+        setConfirming(null);
+        // Do NOT advance the workflow — the approval gate remains active
+        return;
+      }
+      // Only advance the workflow when the API confirms success
       onApprove(action, comment);
-    } catch {
-      // In dev/demo mode, proceed even if API call fails
-      onApprove(action, comment);
-    } finally {
+    } catch (err) {
+      // Network / fetch failure — approval gate must remain active
+      const message = err instanceof Error ? err.message : 'Network error — approval could not be persisted';
+      setApiError(message);
       setConfirming(null);
+      // Do NOT advance the workflow
+      return;
     }
+    setConfirming(null);
   };
 
   return (
@@ -373,6 +387,13 @@ function ApprovalModal({ onApprove, runId }: ApprovalModalProps) {
           style={{ backgroundColor: '#0d1117', border: '1px solid #1f2937', color: '#e6edf3' }}
         />
       </div>
+
+      {/* API error — shown when approval could not be persisted */}
+      {apiError && (
+        <div className="rounded-lg p-3 border border-red-500/30 bg-red-950/30 text-xs text-red-400 leading-relaxed">
+          ✗ Approval could not be saved: {apiError}. The approval gate is still active — please try again.
+        </div>
+      )}
 
       {/* Action buttons */}
       <div className="flex gap-2 pt-1">

@@ -57,9 +57,14 @@ const ALLOWED_COMMANDS: Record<
 
 function validateFixtureDirectory(): { ok: boolean; error?: string } {
   try {
+    // Resolve both the fixture path and the project root to canonical paths
+    // so symlinks cannot be used to escape the sandbox
     const real = fs.realpathSync(FIXTURE_ROOT);
-    const expected = path.resolve(process.cwd(), 'fixtures', FIXTURE_DIR_NAME);
-    if (!real.startsWith(expected)) {
+    // realpathSync the expected root too so the comparison is canonical vs canonical
+    const expectedBase = fs.realpathSync(path.resolve(process.cwd(), 'fixtures'));
+    const expectedFull = path.join(expectedBase, FIXTURE_DIR_NAME);
+    // Must be exactly the fixture dir or a subpath of it — never a parent
+    if (real !== expectedFull && !real.startsWith(expectedFull + path.sep)) {
       return { ok: false, error: `Fixture path escapes sandbox: ${real}` };
     }
     if (!fs.existsSync(real)) {
